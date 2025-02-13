@@ -43,33 +43,76 @@ class Grille extends React.Component {
 
   
   echangerImages(ligne, colonne) {
-    const { celluleSelectionnee } = this.state;
-
+    const { celluleSelectionnee, grille } = this.state;
+  
+   
     if (celluleSelectionnee) {
-      
       const [lignePrecedente, colonnePrecedente] = celluleSelectionnee;
-
+  
       
       if (
         (Math.abs(ligne - lignePrecedente) === 1 && colonne === colonnePrecedente) ||
         (Math.abs(colonne - colonnePrecedente) === 1 && ligne === lignePrecedente)
       ) {
-        let nouvelleGrille = [...this.state.grille];
         
-        const temporaire = nouvelleGrille[lignePrecedente][colonnePrecedente];
+        let nouvelleGrille = [...grille];
+        let temporaire = nouvelleGrille[lignePrecedente][colonnePrecedente];
         nouvelleGrille[lignePrecedente][colonnePrecedente] = nouvelleGrille[ligne][colonne];
         nouvelleGrille[ligne][colonne] = temporaire;
-
+  
         this.setState({ grille: nouvelleGrille, celluleSelectionnee: null });
-      } else {
+  
         
+        this.verifierAlignements();
+      } else {
+       
         this.setState({ celluleSelectionnee: [ligne, colonne] });
       }
     } else {
-      
+    
       this.setState({ celluleSelectionnee: [ligne, colonne] });
     }
   }
+   
+
+  verifierAlignements() {
+    let nouvelleGrille = [...this.state.grille];
+  
+   
+    for (let ligne = 0; ligne < NOMBRE_LIGNES; ligne++) {
+      for (let colonne = 0; colonne < NOMBRE_COLONNES - 2; colonne++) {
+        if (
+          nouvelleGrille[ligne][colonne] === nouvelleGrille[ligne][colonne + 1] &&
+          nouvelleGrille[ligne][colonne] === nouvelleGrille[ligne][colonne + 2]
+        ) {
+      
+          nouvelleGrille[ligne][colonne] = Math.floor(Math.random() * 8);
+          nouvelleGrille[ligne][colonne + 1] = Math.floor(Math.random() * 8);
+          nouvelleGrille[ligne][colonne + 2] = Math.floor(Math.random() * 8);
+        }
+      }
+    }
+  
+    
+    for (let colonne = 0; colonne < NOMBRE_COLONNES; colonne++) {
+      for (let ligne = 0; ligne < NOMBRE_LIGNES - 2; ligne++) {
+        if (
+          nouvelleGrille[ligne][colonne] === nouvelleGrille[ligne + 1][colonne] &&
+          nouvelleGrille[ligne][colonne] === nouvelleGrille[ligne + 2][colonne]
+        ) {
+        
+          nouvelleGrille[ligne][colonne] = Math.floor(Math.random() * 8);
+          nouvelleGrille[ligne + 1][colonne] = Math.floor(Math.random() * 8);
+          nouvelleGrille[ligne + 2][colonne] = Math.floor(Math.random() * 8);
+        }
+      }
+    }
+  
+  
+    this.setState({ grille: nouvelleGrille });
+  }
+  
+  
 
   render() {
     let elementsGrille = []; 
