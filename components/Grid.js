@@ -30,89 +30,140 @@ class Grille extends React.Component {
   
   genererGrille() {
     let grille = [];
+  
     for (let ligne = 0; ligne < NOMBRE_LIGNES; ligne++) {
       let ligneArray = [];
       for (let colonne = 0; colonne < NOMBRE_COLONNES; colonne++) {
-       
-        ligneArray.push(Math.floor(Math.random() * 7));
+        let diamant;
+        do {
+          diamant = Math.floor(Math.random() * 8); 
+        } while (
+          (colonne >= 2 && diamant === ligneArray[colonne - 1] && diamant === ligneArray[colonne - 2]) ||
+          (ligne >= 2 && diamant === grille[ligne - 1][colonne] && diamant === grille[ligne - 2][colonne])
+        );
+  
+        ligneArray.push(diamant);
       }
       grille.push(ligneArray);
     }
+  
     return grille;
   }
-
+  
   
   echangerImages(ligne, colonne) {
     const { celluleSelectionnee, grille } = this.state;
   
-   
     if (celluleSelectionnee) {
       const [lignePrecedente, colonnePrecedente] = celluleSelectionnee;
   
-      
+      // Vérifie si l'échange est valide (cases adjacentes)
       if (
         (Math.abs(ligne - lignePrecedente) === 1 && colonne === colonnePrecedente) ||
         (Math.abs(colonne - colonnePrecedente) === 1 && ligne === lignePrecedente)
       ) {
-        
         let nouvelleGrille = [...grille];
+  
+       
         let temporaire = nouvelleGrille[lignePrecedente][colonnePrecedente];
         nouvelleGrille[lignePrecedente][colonnePrecedente] = nouvelleGrille[ligne][colonne];
         nouvelleGrille[ligne][colonne] = temporaire;
   
-        this.setState({ grille: nouvelleGrille, celluleSelectionnee: null });
-  
-        
-        this.verifierAlignements();
+        // Vérifie si un alignement est créé après l'échange
+        if (this.verifierAlignements(nouvelleGrille)) {
+          this.setState({ grille: nouvelleGrille, celluleSelectionnee: null });
+        } else {
+          // Annule l'échange si aucun alignement n'est créé
+          nouvelleGrille[ligne][colonne] = nouvelleGrille[lignePrecedente][colonnePrecedente];
+          nouvelleGrille[lignePrecedente][colonnePrecedente] = temporaire;
+          this.setState({ celluleSelectionnee: null });
+        }
       } else {
-       
         this.setState({ celluleSelectionnee: [ligne, colonne] });
       }
     } else {
-    
       this.setState({ celluleSelectionnee: [ligne, colonne] });
     }
   }
-   
+  
 
   verifierAlignements() {
     let nouvelleGrille = [...this.state.grille];
+    let alignementsTrouves = false;
   
-   
+    // Vérifier les alignements sur les lignes
     for (let ligne = 0; ligne < NOMBRE_LIGNES; ligne++) {
       for (let colonne = 0; colonne < NOMBRE_COLONNES - 2; colonne++) {
-        if (
-          nouvelleGrille[ligne][colonne] === nouvelleGrille[ligne][colonne + 1] &&
-          nouvelleGrille[ligne][colonne] === nouvelleGrille[ligne][colonne + 2]
+        let longueurAlignement = 1;
+  
+        while (
+          colonne + longueurAlignement < NOMBRE_COLONNES &&
+          nouvelleGrille[ligne][colonne] === nouvelleGrille[ligne][colonne + longueurAlignement]
         ) {
-      
-          nouvelleGrille[ligne][colonne] = Math.floor(Math.random() * 8);
-          nouvelleGrille[ligne][colonne + 1] = Math.floor(Math.random() * 8);
-          nouvelleGrille[ligne][colonne + 2] = Math.floor(Math.random() * 8);
+          longueurAlignement++;
+        }
+  
+        if (longueurAlignement >= 3) {
+          // Remplacer les éléments alignés
+          for (let i = 0; i < longueurAlignement; i++) {
+            nouvelleGrille[ligne][colonne + i] = null;
+          }
+          alignementsTrouves = true;
         }
       }
     }
   
-    
+    // Vérifier les alignements sur les colonnes
     for (let colonne = 0; colonne < NOMBRE_COLONNES; colonne++) {
       for (let ligne = 0; ligne < NOMBRE_LIGNES - 2; ligne++) {
-        if (
-          nouvelleGrille[ligne][colonne] === nouvelleGrille[ligne + 1][colonne] &&
-          nouvelleGrille[ligne][colonne] === nouvelleGrille[ligne + 2][colonne]
+        let longueurAlignement = 1;
+  
+        while (
+          ligne + longueurAlignement < NOMBRE_LIGNES &&
+          nouvelleGrille[ligne][colonne] === nouvelleGrille[ligne + longueurAlignement][colonne]
         ) {
-        
-          nouvelleGrille[ligne][colonne] = Math.floor(Math.random() * 8);
-          nouvelleGrille[ligne + 1][colonne] = Math.floor(Math.random() * 8);
-          nouvelleGrille[ligne + 2][colonne] = Math.floor(Math.random() * 8);
+          longueurAlignement++;
+        }
+  
+        if (longueurAlignement >= 3) {
+          // Remplacer les éléments alignés
+          for (let i = 0; i < longueurAlignement; i++) {
+            nouvelleGrille[ligne + i][colonne] = null;
+          }
+          alignementsTrouves = true;
         }
       }
     }
   
-  
-    this.setState({ grille: nouvelleGrille });
+    if (alignementsTrouves) {
+      for (let colonne = 0; colonne < NOMBRE_COLONNES; colonne++) {
+        let nouvelleColonne = [];
+    
+        // Récupérer tous les diamants non-nul de la colonne
+        for (let ligne = 0; ligne < NOMBRE_LIGNES; ligne++) {
+          if (nouvelleGrille[ligne][colonne] !== null) {
+            nouvelleColonne.push(nouvelleGrille[ligne][colonne]);
+          }
+        }
+    
+        // Compléter avec de nouveaux diamants
+        while (nouvelleColonne.length < NOMBRE_LIGNES) {
+          nouvelleColonne.unshift(Math.floor(Math.random() * 8)); // Ajouter en haut
+        }
+    
+        // Remettre la colonne mise à jour dans la grille
+        for (let ligne = 0; ligne < NOMBRE_LIGNES; ligne++) {
+          nouvelleGrille[ligne][colonne] = nouvelleColonne[ligne];
+        }
+      }
+    
+      // Mettre à jour la grille après modification
+      this.setState({ grille: nouvelleGrille });
+    }
+    
+    return alignementsTrouves;
   }
-  
-  
+    
 
   render() {
     let elementsGrille = []; 
